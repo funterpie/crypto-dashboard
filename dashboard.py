@@ -1,16 +1,16 @@
+import os
+import sys
 import streamlit as st
 import psycopg2
 import logging
 import pandas as pd
 
-# Database connection details
-DB_CONFIG = {
-    'dbname': 'crypto_db',
-    'user': 'postgres',  # Replace with your PostgreSQL username
-    'password': 'taha123',  # Replace with your PostgreSQL password
-    'host': 'localhost',
-    'port': 5432
-}
+# Ensure project root is on sys.path so `from config import ...` works under Streamlit
+project_root = os.path.dirname(os.path.abspath(__file__))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from config import DB_CONFIG
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -31,6 +31,10 @@ def run_query(query):
         return results
     except Exception as e:
         logger.error(f"Error running query: {e}")
+        try:
+            st.error(f"Database error: {e}")
+        except Exception:
+            pass
         return []
 
 # Function to get the Top 5 Gainers (24h)
@@ -107,12 +111,18 @@ elif page == "Market Data":
     # Average Market Cap
     st.header("Average Market Cap")
     avg_market_cap = run_query(get_avg_market_cap())
-    st.write(f"${avg_market_cap[0][0]:,.2f}")
+    if avg_market_cap and avg_market_cap[0] and avg_market_cap[0][0] is not None:
+        st.write(f"${avg_market_cap[0][0]:,.2f}")
+    else:
+        st.write("No data available")
     
     # Total Market Value
     st.header("Total Market Value")
     total_market_value = run_query(get_total_market_value())
-    st.write(f"${total_market_value[0][0]:,.2f}")
+    if total_market_value and total_market_value[0] and total_market_value[0][0] is not None:
+        st.write(f"${total_market_value[0][0]:,.2f}")
+    else:
+        st.write("No data available")
 
 # Page 5: Graphs (Visualization)
 elif page == "Graphs":
